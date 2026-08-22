@@ -1,6 +1,6 @@
-# app/core/config.py
 from functools import lru_cache
 from typing import Literal
+from urllib.parse import quote_plus
 from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -26,8 +26,8 @@ class Settings(BaseSettings):
     @property
     def DATABASE_URL(self) -> str:
         return (
-            f"mysql+aiomysql://{self.DB_USER}:{self.MYSQL_ROOT_PASSWORD}"
-            f"@{self.DB_HOST}:{self.DB_PORT}/{self.MYSQL_DATABASE}"
+            f"mysql+aiomysql://{quote_plus(self.DB_USER)}:{quote_plus(self.MYSQL_ROOT_PASSWORD)}"
+            f"@{self.DB_HOST}:{self.DB_PORT}/{quote_plus(self.MYSQL_DATABASE)}"
         )
 
     model_config = SettingsConfigDict(
