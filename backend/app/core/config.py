@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
 
-    DB_HOST: str = "localhost"
+    DB_HOST: str = "sqlite"
     DB_PORT: int = 3306
     DB_USER: str = "root"
     MYSQL_ROOT_PASSWORD: str = "1234"

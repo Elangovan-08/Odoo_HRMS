@@ -40,7 +40,7 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    date_of_join = 
+    date_of_join: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Relationships
     attendances: Mapped[List["Attendance"]] = relationship("Attendance", back_populates="employee", cascade="all, delete-orphan")

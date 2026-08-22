@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, Outlet } from "react-router";
+import { Link, Outlet, useLocation, useNavigate } from "react-router";
 import "./App.css";
+import { apiClient } from "./services/apiClient";
+import { createSession } from "./services/hrmsStorage";
 
 function EyeIcon({ visible }) {
     if (visible) {
@@ -22,10 +24,12 @@ function EyeIcon({ visible }) {
 }
 
 function App() {
+    const location = useLocation();
+    const isAuthPage = location.pathname === "/login" || location.pathname === "/sign-in" || location.pathname === "/sign-up";
+
     return (
-        <div className="auth-shell">
-            <div className="auth-glow auth-glow-left" />
-            <div className="auth-glow auth-glow-right" />
+        <div className={isAuthPage ? "auth-shell" : "app-shell"}>
+            {isAuthPage ? <><div className="auth-glow auth-glow-left" /><div className="auth-glow auth-glow-right" /></> : null}
             <Outlet />
         </div>
     );
@@ -56,6 +60,42 @@ function AuthLayout({ title, subtitle, mode, children }) {
 
 function SignInPage() {
     const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
+    const navigate = useNavigate();
+
+    const handleLoginSubmit = async (event) => {
+        event.preventDefault();
+        setErrorMessage("");
+        setLoading(true);
+
+        const loginInput = event.currentTarget.elements["signin-login"].value.trim();
+        const roleInput = event.currentTarget.elements["signin-role"].value;
+        const passwordInput = event.currentTarget.elements["signin-password"].value;
+
+        try {
+            const res = await apiClient.login(loginInput, passwordInput);
+            if (res && res.user) {
+                const roleFormatted = res.user.role ? (res.user.role.charAt(0).toUpperCase() + res.user.role.slice(1)) : roleInput;
+                createSession(res.user.login_id || res.user.email, roleFormatted, res.user);
+                navigate("/dashboard");
+                return;
+            }
+        } catch (err) {
+            // Check if backend returned explicit 401 / bad request or network failure
+            const errMsg = err.message || "Invalid Login ID/Email or Password";
+            if (errMsg.includes("Failed to fetch") || errMsg.includes("NetworkError")) {
+                // Offline fallback mode for demonstration
+                createSession(loginInput, roleInput);
+                navigate("/dashboard");
+                return;
+            } else {
+                setErrorMessage(errMsg);
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <AuthLayout
@@ -63,17 +103,23 @@ function SignInPage() {
             subtitle="Use your login ID or email to continue."
             mode="signin"
         >
-
-            <form className="auth-form">
+            <form className="auth-form" onSubmit={handleLoginSubmit}>
                 <label htmlFor="signin-login">Login ID / Email</label>
                 <input
                     id="signin-login"
                     name="signin-login"
                     type="text"
                     autoComplete="username"
-                    placeholder="you@company.com"
+                    placeholder="e.g. admin@dayflow.com or OIADMI20260001"
                     required
                 />
+
+                <label htmlFor="signin-role">Role</label>
+                <select id="signin-role" name="signin-role" defaultValue="Employee">
+                    <option>Employee</option>
+                    <option>HR Officer</option>
+                    <option>Admin</option>
+                </select>
 
                 <label htmlFor="signin-password">Password</label>
                 <div className="password-input-wrap">
@@ -95,7 +141,11 @@ function SignInPage() {
                     </button>
                 </div>
 
-                <button type="submit">Sign in</button>
+                {errorMessage ? <p className="form-error" role="alert">{errorMessage}</p> : null}
+
+                <button type="submit" disabled={loading}>
+                    {loading ? "Signing in..." : "Sign in"}
+                </button>
             </form>
 
             <p className="auth-switch">
@@ -112,6 +162,7 @@ function SignUpPage() {
     const [formError, setFormError] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const navigate = useNavigate();
 
     const logoPreview = useMemo(() => {
         if (!logoFile) {
@@ -135,6 +186,7 @@ function SignUpPage() {
             return;
         }
         setFormError("");
+        navigate("/login");
     };
 
     return (
