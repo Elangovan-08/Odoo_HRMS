@@ -2,7 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router";
 import "./index.css";
-import App from "./App.jsx";
+import App, { SignInPage, SignUpPage } from "./App.jsx";
 
 const router = createBrowserRouter([
     {
@@ -11,7 +11,15 @@ const router = createBrowserRouter([
         children: [
             {
                 index: true,
-                element: <div>Home</div>,
+                element: <SignInPage />,
+            },
+            {
+                path: "sign-in",
+                element: <SignInPage />,
+            },
+            {
+                path: "sign-up",
+                element: <SignUpPage />,
             },
         ],
     },
